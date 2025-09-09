@@ -1,0 +1,82 @@
+name: CI (API + Web)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: Build .NET API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api/Stms.Api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      # uncomment when you add test projects (*.Tests/*.csproj)
+      # - name: Test
+      #   run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test_results.trx"
+
+      - name: Publish
+        run: dotnet publish -c Release -o ${{ github.workspace }}/build/api
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stms-api
+          path: build/api/**
+          if-no-files-found: error
+
+  web:
+    name: Build Web (Vite/React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web/stms-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: web/stms-web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stms-web-dist
+          path: web/stms-web/dist/**
+          if-no-files-found: error
