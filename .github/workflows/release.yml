@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags: [ "v*" ]   # e.g., v0.2.0
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    env:
+      API_PROJ: api/Stms.Api/Stms.Api.csproj
+      WEB_DIR: web/stms-web
+      OUT_API: ${{ github.workspace }}/out/api
+      OUT_WEB: ${{ github.workspace }}/out/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build API
+        run: |
+          dotnet restore $API_PROJ
+          dotnet build $API_PROJ -c Release --no-restore
+          dotnet publish $API_PROJ -c Release -r linux-x64 --self-contained false -o "$OUT_API"
+          (cd out && zip -r api.zip api)
+
+      - name: Build Web
+        working-directory: ${{ env.WEB_DIR }}
+        run: |
+          npm ci
+          npm run build
+          cd dist && zip -r ../../out/web.zip .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/api.zip
+            out/web.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
