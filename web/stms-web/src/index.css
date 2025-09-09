@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset + layout */
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  background: #f6f8fa; /* fallback */
+  color: #111;
+}
+
+/* Generic form styling */
+input, select, button {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d0d7de;
+  outline: none;
+}
+input:focus, select:focus {
+  border-color: #0969da;
+  box-shadow: 0 0 0 3px rgba(9,105,218,.15);
+}
+button {
+  background: #0969da;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+button:hover { background: #075dbf; }
+
+/* Centered auth layout */
+.auth-wrap {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  position: relative;
+  z-index: 1; /* above waves */
+}
+.card {
+  width: 360px;
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.06);
+}
+.card h2 { margin: 0 0 16px; }
+.card form { display: grid; gap: 10px; }
+.card form input, .card form button { width: 100%; }
+
+/* ---------- Swimming theme background ---------- */
+.auth-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+.auth-bg__gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, #38bdf8, #3b82f6, #2563eb, #0ea5e9);
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease-in-out infinite;
+  filter: saturate(1.1);
+  pointer-events: none;
+}
+.auth-bg__waves {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 180px;
+  pointer-events: none;
+}
+.wave {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 200%;
+  height: 180px;
+  transform: translateX(0);
+}
+.wave--back  { opacity: .35; animation: waveMove 18s linear infinite; }
+.wave--front { opacity: .65; animation: waveMove 10s linear infinite; }
+
+/* Lock button */
+.lock-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+  padding: 10px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,.88);
+  border: 1px solid #d0d7de;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease;
+}
+.lock-btn:hover { background: #fff; transform: translateY(-1px); }
+
+/* Animations */
+@keyframes gradientShift {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+@keyframes waveMove {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
