@@ -1,0 +1,86 @@
+name: CI (API + Web)
+
+on:
+  push:
+    branches: [ main ]          # change if you use another branch
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  api:
+    name: Build API
+    runs-on: ubuntu-latest
+    env:
+      API_PROJ: api/Stms.Api/Stms.Api.csproj
+      OUT: ${{ github.workspace }}/artifacts/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore $API_PROJ
+
+      - name: Build (Release)
+        run: dotnet build $API_PROJ -c Release --no-restore
+
+      # add dotnet test here when you add a test project
+
+      - name: Publish self-contained (linux-x64)
+        run: dotnet publish $API_PROJ -c Release -r linux-x64 --self-contained false -o "$OUT"
+
+      - name: Zip API
+        run: |
+          cd artifacts
+          zip -r api.zip api
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-build
+          path: artifacts/api.zip
+
+  web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    env:
+      WEB_DIR: web/stms-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: web/stms-web/package-lock.json
+
+      - name: Install
+        working-directory: ${{ env.WEB_DIR }}
+        run: npm ci
+
+      - name: Build
+        working-directory: ${{ env.WEB_DIR }}
+        run: npm run build
+
+      - name: Zip Web dist
+        run: |
+          cd web/stms-web
+          zip -r ../../artifacts-web.zip dist
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: artifacts-web.zip
